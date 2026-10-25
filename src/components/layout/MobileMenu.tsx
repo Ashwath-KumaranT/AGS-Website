@@ -5,6 +5,7 @@ import { useT } from '@/i18n';
 import { Drawer } from '@/components/ui/Overlay';
 import { useAuthStore } from '@/features/auth/authStore';
 import { useSignOut } from '@/features/auth/useSignOut';
+import { useWishlistStore } from '@/features/wishlist/wishlistStore';
 import { useCategories } from '@/hooks/queries';
 import { useThemeStore, useUiStore } from '@/store/uiStore';
 import { GENDERS } from './nav';

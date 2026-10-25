@@ -22,7 +22,6 @@ export default function OrderConfirmationPage() {
   const { t, tm } = useT();
   const qc = useQueryClient();
   const clearCart = useCartStore((s) => s.clear);
-  const startedAt = useRef(Date.now());
   const [waitedTooLong, setWaitedTooLong] = useState(false);
   const settled = useRef(false);
   const {
@@ -36,19 +35,16 @@ export default function OrderConfirmationPage() {
     // keep polling until the payment webhook has settled the order, but don't poll forever:
     // a webhook that never arrives would otherwise keep the page requesting indefinitely
     refetchInterval: (q) =>
-      q.state.data?.status === 'pending_payment' && Date.now() - startedAt.current < WEBHOOK_WAIT_MS
-        ? 1500
-        : false,
+      q.state.data?.status === 'pending_payment' && !waitedTooLong ? 1500 : false,
   });
 
   const pending = order?.status === 'pending_payment';
 
   useEffect(() => {
-    if (!pending) return;
-    const remaining = Math.max(0, WEBHOOK_WAIT_MS - (Date.now() - startedAt.current));
-    const timer = setTimeout(() => setWaitedTooLong(true), remaining);
+    if (!pending || waitedTooLong) return;
+    const timer = setTimeout(() => setWaitedTooLong(true), WEBHOOK_WAIT_MS);
     return () => clearTimeout(timer);
-  }, [pending]);
+  }, [pending, waitedTooLong]);
 
   // the bag survives a redirect to the payment provider and a slow webhook, so it is
   // emptied here rather than in checkout — this page is where every paid order lands
