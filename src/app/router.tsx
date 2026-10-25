@@ -1,5 +1,11 @@
 import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
-import { createBrowserRouter, Navigate, useLocation, useRouteError } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Navigate,
+  useLocation,
+  useRouteError,
+  type RouteObject,
+} from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { ErrorState, Skeleton } from '@/components/ui/primitives';
 import { RequireAuth } from '@/features/auth/RequireAuth';
@@ -82,7 +88,7 @@ function RouteError() {
   );
 }
 
-export const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     element: <Layout />,
     errorElement: <RouteError />,
@@ -142,4 +148,10 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+// BASE_URL is '/' on the dev server and Vercel, and '/<repo>/' on GitHub Pages, which
+// serves the site from a subdirectory of the domain.
+const basename = import.meta.env.BASE_URL.replace(/\/$/, '') || '/';
+
+export const router = createBrowserRouter(routes, { basename });
