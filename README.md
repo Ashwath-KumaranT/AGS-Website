@@ -156,9 +156,32 @@ RLS is enabled on every table. Customers can read the catalogue and their **own*
 
 > The Supabase adapter, SQL and Edge Functions follow the same contracts as the mock backend. They have **not** been run against a live Supabase project or Stripe account in this repo. Treat the first deployment as a staging test.
 
-## Deployment (Vercel)
+## Deployment
 
-`vercel.json` configures SPA rewrites, immutable asset caching and security headers (HSTS, nosniff, frame-deny, referrer and permissions policies). Set the `VITE_*` variables in the Vercel project.
+The build targets the domain root by default. `BASE_PATH` moves it into a subdirectory; only the GitHub Pages workflow sets it.
+
+### Vercel
+
+Import the repository at [vercel.com/new](https://vercel.com/new). `vercel.json` supplies everything: framework preset, `npm run build`, `dist/`, SPA rewrites, immutable asset caching and security headers (HSTS, nosniff, frame-deny, referrer and permissions policies). `.npmrc` keeps the install working (`legacy-peer-deps`, needed for `@hookform/resolvers` v6 optional peers).
+
+Set these in **Settings → Environment Variables**, per environment:
+
+| Variable            | Value                                                     |
+| ------------------- | --------------------------------------------------------- |
+| `VITE_DATA_SOURCE`  | `mock`, or `supabase` with the two keys below             |
+| `VITE_SITE_URL`     | the deployment's own URL, no trailing slash                |
+| `VITE_CURRENCY`     | `INR`                                                      |
+| `VITE_LOCALE`       | `en-IN`                                                    |
+
+`VITE_SITE_URL` is what canonical and Open Graph URLs are built from, so a preview deployment left pointing at production will advertise the wrong canonical. Never put a service-role key or any payment secret in a `VITE_` variable — the browser can read all of them.
+
+Pushes to `main` deploy to production; every branch and pull request gets its own preview URL.
+
+### GitHub Pages
+
+`.github/workflows/deploy.yml` publishes to Pages on every push to `main`. Enable it once under **Settings → Pages → Source: GitHub Actions**. The workflow sets `BASE_PATH` and `VITE_SITE_URL` from the Pages URL, builds against the mock backend, and copies the app shell to `404.html` so deep links survive — Pages has no rewrite rules.
+
+Pages serves static files only, so this deployment always runs on the mock backend. Use Vercel for the Supabase build.
 
 **Production checklist:**
 
@@ -185,4 +208,4 @@ RLS is enabled on every table. Customers can read the catalogue and their **own*
 | 5 Commerce   | `features/cart/*`, coupons, `pages/CheckoutPage.tsx`, inventory checks                      |
 | 6 Payments   | `services/mock/payments.ts` + `server.ts` (mock), `supabase/functions/*` (Stripe)           |
 | 7 Quality    | `*.test.ts(x)`, `e2e/`, a11y and SEO work above                                             |
-| 8 Launch     | `vercel.json`, `.github/workflows/ci.yml`, checklist above                                  |
+| 8 Launch     | `vercel.json`, `.github/workflows/{ci,deploy}.yml`, checklist above                        |
